@@ -1,0 +1,297 @@
+
+
+
+m
+
+- идея
+- целевая аудитория
+- MVP
+- сайт
+- воронка
+- цены
+- реклама
+- первые клиенты
+- план на 7 дней
+- план на 30 дней
+"""
+
+def save_site(title, html):
+    sid = uuid.uuid4().hex[:10]
+    (GENERATED / f"{sid}.html").write_text(html, encoding="utf-8")
+    c = db()
+    cur = c.cursor()
+    cur.execute("INSERT INTO sites(id,title,html) VALUES(?,?,?)", (sid, title, html))
+    c.commit()
+    c.close()
+    return sid
+
+def get_site(sid):
+    sid = safe_id(sid)
+    c = db()
+    cur = c.cursor()
+    cur.execute("SELECT id,title,html,product_pack,ad_pack,created_at,updated_at FROM sites WHERE id=?", (sid,))
+    row = cur.fetchone()
+    c.close()
+    return row
+
+def update_site(sid, title, html):
+    sid = safe_id(sid)
+    c = db()
+    cur = c.cursor()
+    cur.execute("UPDATE sites SET title=?, html=?, updated_at=CURRENT_TIMESTAMP WHERE id=?", (title, html, sid))
+    c.commit()
+    ok = cur.rowcount > 0
+    c.close()
+    if ok:
+        (GENERATED / f"{sid}.html").write_text(html, encoding="utf-8")
+    return ok
+
+def ai_json(prompt, payload, max_tokens=7000, temperature=0.25):
+    if not client:
+        raise RuntimeError("OPENAI_API_KEY не найден")
+    r = client.chat.completions.create(
+        model=OPENAI_MODEL,
+        messages=[
+            {"role": "system", "content": prompt},
+            {"role": "user", "content": json.dumps(payload, ensure_ascii=False)}
+        ],
+        temperature=temperature,
+        max_tokens=max_tokens
+    )
+    return extract_json(r.choices[0].message.content or "")
+
+@app.get("/", response_class=HTMLResponse)
+def home():
+    return HTMLResponse((STATIC / "index.html").read_text(encoding="utf-8"))
+
+@app.get("/landing", response_class=HTMLResponse)
+def landing():
+    return HTMLResponse((STATIC / "landing.html").read_text(encoding="utf-8"))
+
+@app.get("/landing", response_class=HTMLResponse)
+def landing():
+    return HTMLResponse((STATIC / "landing.html").read_text(encoding="utf-8"))
+
+@app.get("/health")
+def health():
+    return {"status": "ok", "app": APP_NAME, "model": OPENAI_MODEL}
+
+@app.get("/api/me")
+def me():
+    return account()
+
+@app.post("/api/checkout/demo")
+def demo_checkout():
+    set_premium()
+    return {"status": "ok", "plan": "pro", "message": "Demo Premium activated"}
+
+@app.get("/s/{site_id}", response_class=HTMLResponse)
+def public_site(site_id: str):
+    row = get_site(site_id)
+    if not row:
+        return HTMLResponse("<h1>Сайт не найден</h1>", status_code=404)
+    html = row[2]
+    track = f"<script>fetch('/api/view',{{method:'POST',headers:{{'Content-Type':'application/json'}},body:JSON.stringify({{site_id:'{row[0]}'}})}}).catch(()=>{{}})</script>"
+    return HTMLResponse(html.replace("</body>", track + "</body>") if "</body>" in html else html + track)
+
+@app.get("/download/{site_id}")
+def download(site_id: str):
+    row = get_site(site_id)
+    if not row:
+        return JSONResponse(status_code=404, content={"error": "not found"})
+    path = GENERATED / f"{row[0]}.html"
+    path.write_text(row[2], encoding="utf-8")
+    return FileResponse(path, media_type="text/html", filename="index.html")
+
+@app.post("/upload")
+async def upload(file: UploadFile = File(...)):
+    ext = Path(file.filename).suffix.lower()
+    if ext not in [".png", ".jpg", ".jpeg", ".webp", ".gif"]:
+        return JSONResponse(status_code=400, content={"error": "Только изображения"})
+    name = uuid.uuid4().hex[:12] + ext
+    path = UPLOADS / name
+    path.write_bytes(await file.read())
+    return {"url": f"/uploads/{name}"}
+
+@app.post("/generate")
+def generate(req: GenerateRequest):
+    acc = account()
+    if acc["plan"] == "free" and acc["generated_count"] >= 1:
+        return JSONResponse(status_code=402, content={
+            "error": "free_limit",
+            "reply": "Бесплатно доступен 1 сайт. Включи Premium для продолжения."
+        })
+
+    data = ai_json(SITE_PROMPT, req.model_dump())
+    title = data.get("site_title", "Готовый сайт")
+    html = data.get("site_html", fallback_html())
+    sid = save_site(title, html)
+    inc_generation()
+    return {
+        "reply": data.get("reply", "Готово. Сайт создан."),
+        "site_id": sid,
+        "site_title": title,
+        "site_html": html,
+        "public_url": f"/s/{sid}",
+        "download_url": f"/download/{sid}"
+    }
+
+@app.post("/ai-edit")
+def ai_edit(req: AiEditRequest):
+    acc = account()
+    if acc["plan"] == "free":
+        return JSONResponse(status_code=402, content={"error": "premium_required", "reply": "AI-редактор доступен в Premium."})
+    data = ai_json(EDIT_PROMPT, req.model_dump())
+    title = data.get("site_title", req.title or "Сайт")
+    html = data.get("site_html", req.html)
+    sid = safe_id(req.site_id)
+    if sid:
+        update_site(sid, title, html)
+    return {
+        "reply": data.get("reply", "Изменения внесены."),
+        "site_id": sid,
+        "site_title": title,
+        "site_html": html,
+        "public_url": f"/s/{sid}" if sid else None,
+        "download_url": f"/download/{sid}" if sid else None
+    }
+
+@app.post("/product-pack")
+def product_pack(req: ProductPackRequest):
+    acc = account()
+    if acc["plan"] == "free":
+        return JSONResponse(status_code=402, content={"error": "premium_required", "reply": "Product Pack доступен в Premium."})
+    row = get_site(req.site_id)
+    if not row:
+        return JSONResponse(status_code=404, content={"error": "site not found"})
+    data = ai_json(PACK_PROMPT, {"title": row[1], "html": row[2]}, max_tokens=5000)
+    pack = data.get("pack", "")
+    c = db()
+    cur = c.cursor()
+    cur.execute("UPDATE sites SET product_pack=? WHERE id=?", (pack, row[0]))
+    c.commit()
+    c.close()
+    return {"reply": data.get("reply", "Product Pack готов."), "pack": pack}
+
+@app.post("/ad-pack")
+def ad_pack(req: AdPackRequest):
+    acc = account()
+    if acc["plan"] == "free":
+        return JSONResponse(status_code=402, content={"error": "premium_required", "reply": "Рекламный пакет доступен в Premium."})
+    row = get_site(req.site_id)
+    if not row:
+        return JSONResponse(status_code=404, content={"error": "site not found"})
+    data = ai_json(AD_PROMPT, {"title": row[1], "html": row[2]}, max_tokens=4500)
+    pack = data.get("pack", "")
+    c = db()
+    cur = c.cursor()
+    cur.execute("UPDATE sites SET ad_pack=? WHERE id=?", (pack, row[0]))
+    c.commit()
+    c.close()
+    return {"reply": data.get("reply", "Рекламный пакет готов."), "pack": pack}
+
+@app.post("/business-pack")
+def business_pack(req: BusinessPackRequest):
+    acc = account()
+    if acc["plan"] == "free":
+        return JSONResponse(status_code=402, content={"error": "premium_required", "reply": "Создание бизнеса доступно в Premium."})
+    data = ai_json(BUSINESS_PROMPT, req.model_dump(), max_tokens=5000)
+    return {"reply": data.get("reply", "Бизнес-пакет готов."), "pack": data.get("business_pack", "")}
+
+@app.get("/api/sites")
+def list_sites():
+    c = db()
+    cur = c.cursor()
+    cur.execute("""
+    SELECT s.id,s.title,s.created_at,s.updated_at,
+    COUNT(DISTINCT l.id), COUNT(DISTINCT v.id)
+    FROM sites s
+    LEFT JOIN leads l ON l.site_id=s.id
+    LEFT JOIN views v ON v.site_id=s.id
+    GROUP BY s.id ORDER BY s.created_at DESC
+    """)
+    rows = cur.fetchall()
+    c.close()
+    return {"sites": [{
+        "id": r[0], "title": r[1], "created_at": r[2], "updated_at": r[3],
+        "leads_count": r[4], "views_count": r[5],
+        "public_url": f"/s/{r[0]}", "download_url": f"/download/{r[0]}"
+    } for r in rows]}
+
+@app.get("/api/sites/{site_id}")
+def api_site(site_id: str):
+    row = get_site(site_id)
+    if not row:
+        return JSONResponse(status_code=404, content={"error": "not found"})
+    return {
+        "id": row[0], "title": row[1], "html": row[2],
+        "product_pack": row[3], "ad_pack": row[4],
+        "created_at": row[5], "updated_at": row[6],
+        "public_url": f"/s/{row[0]}", "download_url": f"/download/{row[0]}"
+    }
+
+@app.put("/api/sites/{site_id}")
+def api_update(site_id: str, req: UpdateSiteRequest):
+    ok = update_site(site_id, req.title, req.html)
+    if not ok:
+        return JSONResponse(status_code=404, content={"error": "not found"})
+    sid = safe_id(site_id)
+    return {"status": "ok", "public_url": f"/s/{sid}", "download_url": f"/download/{sid}"}
+
+@app.delete("/api/sites/{site_id}")
+def api_delete(site_id: str):
+    sid = safe_id(site_id)
+    c = db()
+    cur = c.cursor()
+    cur.execute("DELETE FROM sites WHERE id=?", (sid,))
+    cur.execute("DELETE FROM leads WHERE site_id=?", (sid,))
+    cur.execute("DELETE FROM views WHERE site_id=?", (sid,))
+    c.commit()
+    c.close()
+    p = GENERATED / f"{sid}.html"
+    if p.exists():
+        p.unlink()
+    return {"status": "deleted"}
+
+@app.post("/api/lead")
+def lead(req: LeadRequest):
+    sid = safe_id(req.site_id)
+    c = db()
+    cur = c.cursor()
+    cur.execute("INSERT INTO leads(site_id,name,phone,message) VALUES(?,?,?,?)", (sid, req.name, req.phone, req.message))
+    c.commit()
+    c.close()
+    return {"status": "ok"}
+
+@app.post("/api/view")
+def view(req: LeadRequest):
+    sid = safe_id(req.site_id)
+    c = db()
+    cur = c.cursor()
+    cur.execute("INSERT INTO views(site_id) VALUES(?)", (sid,))
+    c.commit()
+    c.close()
+    return {"status": "ok"}
+
+@app.get("/api/leads/{site_id}")
+def leads(site_id: str):
+    sid = safe_id(site_id)
+    c = db()
+    cur = c.cursor()
+    cur.execute("SELECT name,phone,message,created_at FROM leads WHERE site_id=? ORDER BY created_at DESC", (sid,))
+    rows = cur.fetchall()
+    c.close()
+    return {"leads": [{"name": r[0], "phone": r[1], "message": r[2], "created_at": r[3]} for r in rows]}
+
+@app.get("/api/analytics/{site_id}")
+def analytics(site_id: str):
+    sid = safe_id(site_id)
+    c = db()
+    cur = c.cursor()
+    cur.execute("SELECT COUNT(*) FROM views WHERE site_id=?", (sid,))
+    views = cur.fetchone()[0]
+    cur.execute("SELECT COUNT(*) FROM leads WHERE site_id=?", (sid,))
+    leads_count = cur.fetchone()[0]
+    c.close()
+    conv = round((leads_count / views) * 100, 2) if views else 0
+    return {"views": views, "leads": leads_count, "conversion": conv}
