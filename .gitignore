@@ -1,0 +1,7 @@
+.env
+.venv/
+__pycache__/
+*.pyc
+sites.db
+uploads/
+generated_sites/

@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+<title>Z.E AI Business Builder</title>
+<style>
+*{box-sizing:border-box}
+:root{--bg:#07111f;--panel:rgba(11,23,40,.96);--card:rgba(255,255,255,.08);--border:rgba(255,255,255,.1);--accent:#2ea7ff;--accent2:#42f5c8;--muted:rgba(255,255,255,.65)}
+html,body{margin:0;height:100%;background:var(--bg);color:#fff;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;overflow:hidden}
+.app{height:100dvh;display:grid;grid-template-columns:450px 1fr;background:radial-gradient(circle at top left,rgba(46,167,255,.18),transparent 30%),radial-gradient(circle at bottom right,rgba(66,245,200,.12),transparent 30%),var(--bg)}
+.side{height:100dvh;background:var(--panel);border-right:1px solid var(--border);display:flex;flex-direction:column}
+.head{padding:14px;border-bottom:1px solid var(--border);display:flex;gap:10px;align-items:center}
+.logo{width:42px;height:42px;border-radius:14px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#06101c;font-weight:900;display:flex;align-items:center;justify-content:center}
+h1{font-size:17px;margin:0}.head p{margin:3px 0 0;color:var(--muted);font-size:12px}
+.plan{margin-left:auto;padding:8px 10px;border-radius:999px;background:rgba(255,255,255,.08);font-size:12px}
+.tabs{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;padding:10px;border-bottom:1px solid var(--border)}
+.tabs button{border:0;border-radius:12px;padding:9px 4px;background:rgba(255,255,255,.08);color:white;font-size:11px;font-weight:800}
+.tabs button.active{background:var(--accent)}
+.view{display:none;flex:1;min-height:0;overflow:auto;padding:12px}.view.active{display:block}
+.card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:13px;margin-bottom:10px}
+textarea,input,select{width:100%;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.08);color:white;border-radius:14px;padding:12px;margin:6px 0;outline:none}
+select option{color:#111}
+button,.btn{border:0;border-radius:13px;padding:11px;background:rgba(255,255,255,.1);color:white;text-decoration:none;font-weight:800;cursor:pointer;display:inline-block;text-align:center}
+.primary{background:linear-gradient(135deg,var(--accent2),var(--accent));color:#06101c}.premium{background:linear-gradient(135deg,#ffd166,#ff9f1c);color:#111}.danger{background:rgba(255,77,109,.25)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.full{width:100%;margin-top:8px}
+.preview{height:100dvh;background:#111827;display:flex;flex-direction:column}
+.top{height:62px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:rgba(7,17,31,.98)}
+.top small{display:block;color:var(--muted)}iframe{flex:1;border:0;background:white}
+.code{height:300px;font-family:monospace;font-size:12px}
+.pack{white-space:pre-wrap;line-height:1.45;color:#dff7ff}
+.mobile{display:none}
+@media(max-width:900px){.app{display:block}.mobile{height:54px;display:flex;gap:8px;padding:8px;background:#07111f}.mobile button{flex:1}.side,.preview{height:calc(100dvh - 54px)}.preview{display:none}.app.show-preview .side{display:none}.app.show-preview .preview{display:flex}}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+<div class="mobile"><button onclick="panel()">Панель</button><button onclick="show()">Сайт</button></div>
+
+<aside class="side">
+<div class="head">
+<div class="logo">ZE</div>
+<div><h1>Z.E AI Business Builder</h1><p>Сайт · CRM · Product Pack · Premium</p></div>
+<div class="plan" id="plan">FREE</div>
+</div>
+
+<div class="tabs">
+<button class="active" onclick="tab('create',this)">Создать</button>
+<button onclick="tab('sites',this)">Сайты</button>
+<button onclick="tab('ai',this)">AI</button>
+<button onclick="tab('pack',this)">Pack</button>
+<button onclick="tab('pay',this)">₽</button>
+</div>
+
+<section class="view active" id="create">
+<div class="card">
+<b>Создать продукт</b>
+<select id="mode"><option value="site">Готовый сайт</option><option value="business">Бизнес под ключ</option></select>
+<select id="style"><option value="premium">Premium</option><option value="minimal">Minimal</option><option value="luxury">Luxury</option><option value="tech">Tech</option></select>
+<textarea id="prompt" rows="7" placeholder="Например: сделай сайт для барбершопа Ze. Услуга: стрижка бороды. Цена 200 рублей. Телефон..."></textarea>
+<button class="primary full" onclick="generate()">Создать</button>
+</div>
+<div class="grid">
+<button onclick="tpl('Нужен сайт для барбершопа Ze. Услуга: стрижка бороды. Цена от 500 рублей. Нужна запись, отзывы, FAQ, кнопка звонка.')">Барбершоп</button>
+<button onclick="tpl('Нужен сайт для салона красоты. Услуги: стрижка, окрашивание, маникюр. Нужна онлайн запись и заявки.')">Салон</button>
+<button onclick="tpl('Нужен сайт для ремонта квартир. Услуги под ключ, цены, гарантии, заявки.')">Ремонт</button>
+<button onclick="tpl('Нужен сайт для AI агентства. Услуги: сайты, боты, автоматизация, AI ассистенты.')">AI агентство</button>
+</div>
+</section>
+
+<section class="view" id="sites">
+<div id="sitesList">Загрузка...</div>
+</section>
+
+<section class="view" id="ai">
+<div class="card">
+<b>AI-редактор сайта</b>
+<input id="editTitle" placeholder="Название сайта">
+<input id="aiText" placeholder="Команда: сделай дороже / добавь отзывы / измени цену">
+<div class="grid">
+<button class="premium" onclick="quick('Сделай сайт дороже, премиальнее, сильнее продающим')">Улучшить</button>
+<button onclick="quick('Сделай текст более продающим и добавь сильный CTA')">Продажи</button>
+<button onclick="quick('Добавь блок доверия, гарантии и отзывы')">Доверие</button>
+<button onclick="quick('Сделай сайт короче, чище и понятнее')">Короче</button>
+</div>
+<textarea id="htmlEditor" class="code"></textarea>
+<div class="grid">
+<button onclick="previewEdit()">Предпросмотр</button>
+<button class="primary" onclick="saveEdit()">Сохранить</button>
+</div>
+</div>
+</section>
+
+<section class="view" id="pack">
+<div class="card">
+<b>Product Pack / Реклама / Бизнес</b>
+<p style="color:var(--muted)">Открой сайт и нажми нужную кнопку.</p>
+<div class="grid">
+<button class="premium" onclick="makeProductPack()">Product Pack</button>
+<button class="premium" onclick="makeAdPack()">Реклама</button>
+</div>
+<input id="businessIdea" placeholder="Идея бизнеса">
+<button class="premium full" onclick="makeBusiness()">Создать бизнес под ключ</button>
+</div>
+<div class="card"><div class="pack" id="packText">Здесь появится пакет.</div></div>
+</section>
+
+<section class="view" id="pay">
+<div class="card">
+<h2>Premium</h2>
+<p>Бесплатно: 1 сайт. Premium: AI-редактор, Product Pack, реклама, создание бизнеса, без лимита сайтов.</p>
+<h3>Тарифы</h3>
+<p>Starter — 990 ₽/мес<br>Pro — 2990 ₽/мес<br>Business — 6990 ₽/мес</p>
+<button class="premium full" onclick="activatePremium()">Включить Demo Premium</button>
+</div>
+</section>
+</aside>
+
+<main class="preview">
+<div class="top">
+<div><b id="title">Предпросмотр</b><small id="status">Сайт появится здесь</small></div>
+<div>
+<button onclick="copyLink()">Ссылка</button>
+<button onclick="copyHtml()">HTML</button>
+<a class="btn primary" id="download" href="#">Скачать</a>
+</div>
+</div>
+<iframe id="frame"></iframe>
+</main>
+</div>
+
+<script>
+let currentId="", currentHtml="", currentLink="", currentDownload="";
+const frame=document.getElementById("frame");
+const statusEl=document.getElementById("status");
+const titleEl=document.getElementById("title");
+
+function panel(){document.getElementById("app").classList.remove("show-preview")}
+function show(){document.getElementById("app").classList.add("show-preview")}
+function tab(id,btn){document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));document.getElementById(id).classList.add("active");document.querySelectorAll(".tabs button").forEach(b=>b.classList.remove("active"));btn.classList.add("active");if(id==="sites")loadSites()}
+function tpl(t){document.getElementById("prompt").value=t}
+async function refreshMe(){let r=await fetch("/api/me");let d=await r.json();document.getElementById("plan").textContent=d.plan.toUpperCase()+" · "+d.generated_count+"/1"}
+async function activatePremium(){let r=await fetch("/api/checkout/demo",{method:"POST"});let d=await r.json();alert(d.message);refreshMe()}
+
+async function generate(){
+let mode=document.getElementById("mode").value;
+let prompt=document.getElementById("prompt").value.trim();
+if(!prompt)return alert("Опиши продукт");
+statusEl.textContent="Создаю продукт...";
+if(mode==="business"){document.getElementById("businessIdea").value=prompt;await makeBusiness();return}
+let r=await fetch("/generate",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({message:prompt,style:document.getElementById("style").value})});
+let d=await r.json();
+if(!r.ok){alert(d.reply||d.error);return}
+apply(d);loadSites();refreshMe();show();
+}
+
+function apply(d){
+currentId=d.site_id||currentId;
+currentHtml=d.site_html||currentHtml;
+currentLink=d.public_url?location.origin+d.public_url:currentLink;
+currentDownload=d.download_url||currentDownload;
+if(d.site_title){titleEl.textContent=d.site_title;document.getElementById("editTitle").value=d.site_title}
+if(currentHtml){frame.srcdoc=currentHtml;document.getElementById("htmlEditor").value=currentHtml}
+if(currentDownload)document.getElementById("download").href=currentDownload;
+statusEl.textContent=d.reply||"Готово";
+}
+
+async function loadSites(){
+let r=await fetch("/api/sites");let d=await r.json();let box=document.getElementById("sitesList");box.innerHTML="";
+if(!d.sites.length){box.innerHTML="<div class='card'>Сайтов пока нет</div>";return}
+d.sites.forEach(s=>{
+let div=document.createElement("div");div.className="card";
+div.innerHTML=`<b>${esc(s.title)}</b><p style="color:var(--muted)">ID: ${s.id}<br>Просмотры: ${s.views_count} · Лиды: ${s.leads_count}</p>
+<div class="grid">
+<button onclick="openSite('${s.id}')">Открыть</button>
+<button class="premium" onclick="improve('${s.id}')">Улучшить</button>
+<button onclick="analytics('${s.id}')">Аналитика</button>
+<a class="btn" href="${s.download_url}">Скачать</a>
+</div>`;
+box.appendChild(div)
+})
+}
+
+async function openSite(id){
+let r=await fetch("/api/sites/"+id);let d=await r.json();
+currentId=d.id;currentHtml=d.html;currentLink=location.origin+d.public_url;currentDownload=d.download_url;
+titleEl.textContent=d.title;frame.srcdoc=currentHtml;document.getElementById("htmlEditor").value=currentHtml;document.getElementById("editTitle").value=d.title;document.getElementById("download").href=d.download_url;statusEl.textContent="Открыт сайт";show()
+}
+
+async function improve(id){await openSite(id);await aiEdit("Сделай сайт дороже, премиальнее, сильнее продающим, добавь доверие и CTA")}
+function quick(t){document.getElementById("aiText").value=t;aiEdit(t)}
+async function aiEdit(t=null){
+let instruction=t||document.getElementById("aiText").value.trim();
+if(!instruction)return alert("Напиши команду");
+let r=await fetch("/ai-edit",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({site_id:currentId,title:document.getElementById("editTitle").value,html:document.getElementById("htmlEditor").value,instruction})});
+let d=await r.json();if(!r.ok){alert(d.reply||d.error);return}apply(d);loadSites();show()
+}
+function previewEdit(){currentHtml=document.getElementById("htmlEditor").value;frame.srcdoc=currentHtml;show()}
+async function saveEdit(){
+let r=await fetch("/api/sites/"+currentId,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({title:document.getElementById("editTitle").value,html:document.getElementById("htmlEditor").value})});
+let d=await r.json();if(!r.ok)return alert("Ошибка");alert("Сохранено");currentLink=location.origin+d.public_url;currentDownload=d.download_url;loadSites()
+}
+
+async function makeProductPack(){
+if(!currentId)return alert("Открой сайт");
+let r=await fetch("/product-pack",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({site_id:currentId})});
+let d=await r.json();if(!r.ok)return alert(d.reply||d.error);document.getElementById("packText").textContent=d.pack
+}
+async function makeAdPack(){
+if(!currentId)return alert("Открой сайт");
+let r=await fetch("/ad-pack",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({site_id:currentId})});
+let d=await r.json();if(!r.ok)return alert(d.reply||d.error);document.getElementById("packText").textContent=d.pack
+}
+async function makeBusiness(){
+let idea=document.getElementById("businessIdea").value.trim();if(!idea)return alert("Напиши идею");
+let r=await fetch("/business-pack",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({idea})});
+let d=await r.json();if(!r.ok)return alert(d.reply||d.error);document.getElementById("packText").textContent=d.pack;tab('pack',document.querySelectorAll('.tabs button')[3])
+}
+async function analytics(id){let r=await fetch("/api/analytics/"+id);let d=await r.json();alert(`Просмотры: ${d.views}\nЛиды: ${d.leads}\nКонверсия: ${d.conversion}%`)}
+async function copyHtml(){await navigator.clipboard.writeText(currentHtml);alert("HTML скопирован")}
+async function copyLink(){await navigator.clipboard.writeText(currentLink);alert("Ссылка скопирована")}
+function esc(x){return String(x||"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")}
+refreshMe();loadSites();
+</script>
+</body>
+</html>
