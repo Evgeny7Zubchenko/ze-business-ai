@@ -298,6 +298,10 @@ def home():
 def landing():
     return HTMLResponse((STATIC / "landing.html").read_text(encoding="utf-8"))
 
+@app.get("/landing", response_class=HTMLResponse)
+def landing():
+    return HTMLResponse((STATIC / "landing.html").read_text(encoding="utf-8"))
+
 @app.get("/health")
 def health():
     return {"status": "ok", "app": APP_NAME, "model": OPENAI_MODEL}
