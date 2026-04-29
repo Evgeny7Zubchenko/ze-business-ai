@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Z.E AI Business Builder</title>
+
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;
+  background:#07111f;
+  color:white;
+}
+a{text-decoration:none;color:inherit}
+.hero{
+  min-height:100vh;
+  padding:28px 18px;
+  background:
+    radial-gradient(circle at top left,rgba(46,167,255,.25),transparent 35%),
+    radial-gradient(circle at bottom right,rgba(66,245,200,.18),transparent 35%),
+    #07111f;
+}
+.nav{
+  max-width:1180px;
+  margin:0 auto 70px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+.logo{
+  display:flex;
+  gap:10px;
+  align-items:center;
+  font-weight:900;
+}
+.logo-box{
+  width:42px;
+  height:42px;
+  border-radius:14px;
+  background:linear-gradient(135deg,#42f5c8,#2ea7ff);
+  color:#06101c;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.nav a{
+  padding:12px 18px;
+  border-radius:999px;
+  background:rgba(255,255,255,.09);
+  border:1px solid rgba(255,255,255,.12);
+}
+.hero-inner{
+  max-width:1180px;
+  margin:auto;
+  display:grid;
+  grid-template-columns:1.05fr .95fr;
+  gap:34px;
+  align-items:center;
+}
+.badge{
+  display:inline-block;
+  padding:9px 14px;
+  border-radius:999px;
+  background:rgba(46,167,255,.14);
+  border:1px solid rgba(46,167,255,.25);
+  color:#9bd8ff;
+  font-weight:700;
+  margin-bottom:18px;
+}
+h1{
+  font-size:58px;
+  line-height:1.02;
+  margin:0 0 20px;
+  letter-spacing:-1.8px;
+}
+.hero p{
+  font-size:20px;
+  line-height:1.55;
+  color:rgba(255,255,255,.72);
+  margin:0 0 28px;
+}
+.cta{
+  display:flex;
+  gap:12px;
+  flex-wrap:wrap;
+}
+.btn{
+  padding:16px 22px;
+  border-radius:16px;
+  font-weight:900;
+  display:inline-block;
+}
+.primary{
+  background:linear-gradient(135deg,#42f5c8,#2ea7ff);
+  color:#06101c;
+}
+.secondary{
+  background:rgba(255,255,255,.09);
+  border:1px solid rgba(255,255,255,.14);
+}
+.mock{
+  border-radius:34px;
+  background:rgba(255,255,255,.08);
+  border:1px solid rgba(255,255,255,.12);
+  padding:18px;
+  box-shadow:0 30px 90px rgba(0,0,0,.38);
+}
+.mock-top{
+  display:flex;
+  gap:8px;
+  margin-bottom:14px;
+}
+.dot{width:12px;height:12px;border-radius:50%;background:#2ea7ff}
+.screen{
+  background:#0b1728;
+  border-radius:24px;
+  padding:18px;
+}
+.card{
+  padding:18px;
+  border-radius:22px;
+  background:rgba(255,255,255,.08);
+  margin-bottom:14px;
+}
+.card h3{margin:0 0 8px}
+.card p{font-size:14px;margin:0;color:rgba(255,255,255,.65)}
+.grid{
+  max-width:1180px;
+  margin:0 auto;
+  padding:80px 18px;
+}
+.section-title{
+  text-align:center;
+  max-width:760px;
+  margin:0 auto 42px;
+}
+.section-title h2{
+  font-size:42px;
+  margin:0 0 14px;
+}
+.section-title p{
+  color:rgba(255,255,255,.65);
+  font-size:18px;
+  line-height:1.5;
+}
+.features{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:18px;
+}
+.feature{
+  padding:24px;
+  border-radius:26px;
+  background:rgba(255,255,255,.07);
+  border:1px solid rgba(255,255,255,.1);
+}
+.feature span{font-size:30px}
+.feature h3{font-size:20px;margin:14px 0 8px}
+.feature p{color:rgba(255,255,255,.65);line-height:1.45}
+.steps{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:16px;
+}
+.step{
+  padding:22px;
+  border-radius:24px;
+  background:rgba(46,167,255,.09);
+  border:1px solid rgba(46,167,255,.16);
+}
+.step b{
+  display:block;
+  font-size:28px;
+  margin-bottom:10px;
+  color:#42f5c8;
+}
+.pricing{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:18px;
+}
+.price{
+  padding:28px;
+  border-radius:28px;
+  background:rgba(255,255,255,.07);
+  border:1px solid rgba(255,255,255,.1);
+}
+.price.main{
+  background:linear-gradient(180deg,rgba(46,167,255,.22),rgba(255,255,255,.07));
+  border-color:rgba(46,167,255,.4);
+}
+.price h3{font-size:24px;margin:0 0 8px}
+.money{font-size:38px;font-weight:900;margin:18px 0}
+.price ul{
+  padding:0;
+  list-style:none;
+  color:rgba(255,255,255,.72);
+  line-height:2;
+}
+.final{
+  max-width:920px;
+  margin:80px auto;
+  text-align:center;
+  padding:42px 24px;
+  border-radius:34px;
+  background:linear-gradient(135deg,rgba(46,167,255,.22),rgba(66,245,200,.12));
+  border:1px solid rgba(255,255,255,.12);
+}
+.final h2{font-size:42px;margin:0 0 14px}
+.final p{color:rgba(255,255,255,.72);font-size:18px}
+footer{
+  text-align:center;
+  color:rgba(255,255,255,.45);
+  padding:30px;
+}
+
+@media(max-width:850px){
+  .hero-inner{grid-template-columns:1fr}
+  h1{font-size:40px}
+  .features,.steps,.pricing{grid-template-columns:1fr}
+}
+</style>
+</head>
+
+<body>
+
+<section class="hero">
+  <div class="nav">
+    <div class="logo">
+      <div class="logo-box">ZE</div>
+      <div>Z.E AI Business Builder</div>
+    </div>
+    <a href="/">Открыть сервис</a>
+  </div>
+
+  <div class="hero-inner">
+    <div>
+      <div class="badge">AI-сервис для запуска бизнеса</div>
+      <h1>Создай сайт и получай клиентов за 1 день</h1>
+      <p>
+        Генерируй сайты, собирай заявки, улучшай тексты и запускай продажи без разработчиков.
+      </p>
+      <div class="cta">
+        <a class="btn primary" href="/">Создать сайт бесплатно</a>
+        <a class="btn secondary" href="#pricing">Тарифы</a>
+      </div>
+    </div>
+
+    <div class="mock">
+      <div class="mock-top">
+        <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+      </div>
+      <div class="screen">
+        <div class="card">
+          <h3>Сайт создан</h3>
+          <p>Лиды: 12 · Конверсия: 7.8%</p>
+        </div>
+        <div class="card">
+          <h3>AI улучшение</h3>
+          <p>“Сделай сайт дороже и добавь отзывы”</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="grid">
+  <div class="section-title">
+    <h2>Возможности</h2>
+  </div>
+
+  <div class="features">
+    <div class="feature"><span>⚡</span><h3>Сайт за минуты</h3><p>AI создаёт готовый сайт.</p></div>
+    <div class="feature"><span>🤖</span><h3>AI-редактор</h3><p>Меняй сайт текстом.</p></div>
+    <div class="feature"><span>📊</span><h3>Аналитика</h3><p>Просмотры и лиды.</p></div>
+  </div>
+</section>
+
+<section class="grid" id="pricing">
+  <div class="section-title">
+    <h2>Тарифы</h2>
+  </div>
+
+  <div class="pricing">
+    <div class="price">
+      <h3>Free</h3>
+      <div class="money">0 ₽</div>
+      <ul>
+        <li>1 сайт</li>
+      </ul>
+    </div>
+
+    <div class="price main">
+      <h3>Pro</h3>
+      <div class="money">2990 ₽</div>
+      <ul>
+        <li>Безлимит</li>
+        <li>AI функции</li>
+      </ul>
+    </div>
+
+    <div class="price">
+      <h3>Business</h3>
+      <div class="money">6990 ₽</div>
+      <ul>
+        <li>Полный пакет</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="final">
+  <h2>Начни прямо сейчас</h2>
+  <a class="btn primary" href="/">Открыть сервис</a>
+</section>
+
+<footer>
+  Z.E AI Builder
+</footer>
+
+</body>
+</html>

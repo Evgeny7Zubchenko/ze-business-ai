@@ -294,6 +294,10 @@ def ai_json(prompt, payload, max_tokens=7000, temperature=0.25):
 def home():
     return HTMLResponse((STATIC / "index.html").read_text(encoding="utf-8"))
 
+@app.get("/landing", response_class=HTMLResponse)
+def landing():
+    return HTMLResponse((STATIC / "landing.html").read_text(encoding="utf-8"))
+
 @app.get("/health")
 def health():
     return {"status": "ok", "app": APP_NAME, "model": OPENAI_MODEL}
